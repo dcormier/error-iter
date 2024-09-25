@@ -30,11 +30,17 @@
 #![forbid(unsafe_code)]
 
 pub struct ErrorIterator<'a> {
-    inner: Option<&'a (dyn std::error::Error + 'static)>,
+    inner: Option<&'a dyn std::error::Error>,
+}
+
+impl<'a> ErrorIterator<'a> {
+    pub fn new(err: &'a dyn std::error::Error) -> Self {
+        Self { inner: Some(err) }
+    }
 }
 
 impl<'a> Iterator for ErrorIterator<'a> {
-    type Item = &'a (dyn std::error::Error + 'static);
+    type Item = &'a dyn std::error::Error;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(error) = self.inner.take() {
@@ -74,7 +80,7 @@ impl<'a> std::iter::FusedIterator for ErrorIterator<'a> {}
 /// Implement this trait on your error types for free iterators over their sources!
 ///
 /// The default implementation provides iterators for any type that implements `std::error::Error`.
-pub trait ErrorExt: std::error::Error + Sized + 'static {
+pub trait ErrorExt: std::error::Error + Sized {
     /// Create an iterator over the error and its recursive sources.
     ///
     /// ```
